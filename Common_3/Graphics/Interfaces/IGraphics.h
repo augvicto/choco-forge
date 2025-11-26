@@ -1774,6 +1774,26 @@ typedef struct BinaryShaderDesc
 #endif
 } BinaryShaderDesc;
 
+/// Shader stage descriptor for source code (Metal source text)
+typedef struct SourceShaderStageDesc
+{
+    const char* pName;
+    /// Source code string (null-terminated)
+    const char* pSource;
+    const char* pEntryPoint;
+} SourceShaderStageDesc;
+
+/// Shader descriptor for source code compilation
+typedef struct SourceShaderDesc
+{
+    ShaderStage           mStages;
+    SourceShaderStageDesc mVert;
+    SourceShaderStageDesc mFrag;
+    SourceShaderStageDesc mComp;
+    const ShaderConstant* pConstants;
+    uint32_t              mConstantCount;
+} SourceShaderDesc;
+
 typedef struct Shader
 {
     ShaderStage mStages : 31;
@@ -2859,6 +2879,7 @@ void removeSampler(Renderer* pRenderer, Sampler* pSampler);
 
 // shader functions
 void addShaderBinary(Renderer* pRenderer, const BinaryShaderDesc* pDesc, Shader** ppShaderProgram);
+void addShaderSource(Renderer* pRenderer, const SourceShaderDesc* pDesc, Shader** ppShaderProgram);
 void removeShader(Renderer* pRenderer, Shader* pShaderProgram);
 
 // pipeline functions

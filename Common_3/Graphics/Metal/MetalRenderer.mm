@@ -3371,6 +3371,95 @@ void addShaderBinary(Renderer* pRenderer, const BinaryShaderDesc* pDesc, Shader*
     *ppShaderProgram = pShaderProgram;
 }
 
+void addShaderSource(Renderer* pRenderer, const SourceShaderDesc* pDesc, Shader** ppShaderProgram)
+{
+    ASSERT(pRenderer);
+    ASSERT(pDesc && pDesc->mStages);
+    ASSERT(ppShaderProgram);
+
+    Shader* pShaderProgram = (Shader*)tf_calloc(1, sizeof(Shader));
+    ASSERT(pShaderProgram);
+
+    pShaderProgram->mStages = pDesc->mStages;
+
+    for (uint32_t i = 0; i < SHADER_STAGE_COUNT; ++i)
+    {
+        ShaderStage                   stage_mask = (ShaderStage)(1 << i);
+        const SourceShaderStageDesc*  pStage = NULL;
+        __strong id<MTLFunction>*     compiled_code = NULL;
+
+        if (stage_mask == (pShaderProgram->mStages & stage_mask))
+        {
+            switch (stage_mask)
+            {
+            case SHADER_STAGE_VERT:
+            {
+                pStage = &pDesc->mVert;
+                compiled_code = &(pShaderProgram->pVertexShader);
+            }
+            break;
+            case SHADER_STAGE_FRAG:
+            {
+                pStage = &pDesc->mFrag;
+                compiled_code = &(pShaderProgram->pFragmentShader);
+            }
+            break;
+            case SHADER_STAGE_COMP:
+            {
+                pStage = &pDesc->mComp;
+                compiled_code = &(pShaderProgram->pComputeShader);
+            }
+            break;
+            default:
+                break;
+            }
+
+            if (!pStage || !pStage->pSource)
+            {
+                continue;
+            }
+
+            // Create a MTLLibrary from source code
+            NSString* sourceStr = [[NSString alloc] initWithUTF8String:pStage->pSource];
+            NSError* error = nil;
+            id<MTLLibrary> lib = [pRenderer->pDevice newLibraryWithSource:sourceStr options:nil error:&error];
+
+            if (error != nil)
+            {
+                LOGF(LogLevel::eERROR, "Failed to compile shader source: %s", [error.localizedDescription UTF8String]);
+                ASSERT(false);
+            }
+            ASSERT(lib);
+
+            // Create a MTLFunction from the loaded MTLLibrary
+            NSString* entryPointNStr = [lib functionNames][0];
+            if (pStage->pEntryPoint)
+            {
+                entryPointNStr = [[NSString alloc] initWithUTF8String:pStage->pEntryPoint];
+            }
+            id<MTLFunction> function = [lib newFunctionWithName:entryPointNStr];
+            ASSERT(function);
+
+            if (pDesc->mConstantCount)
+            {
+                @autoreleasepool
+                {
+                    util_specialize_function(lib, pDesc->pConstants, pDesc->mConstantCount, &function);
+                }
+            }
+
+            *compiled_code = function;
+        }
+    }
+
+    if (pShaderProgram->pVertexShader)
+    {
+        pShaderProgram->mTessellation = pShaderProgram->pVertexShader.patchType != MTLPatchTypeNone;
+    }
+
+    *ppShaderProgram = pShaderProgram;
+}
+
 void removeShader(Renderer* pRenderer, Shader* pShaderProgram)
 {
     ASSERT(pShaderProgram);
