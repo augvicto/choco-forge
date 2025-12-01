@@ -793,15 +793,31 @@ void addDescriptorSet(Renderer* pRenderer, const DescriptorSetDesc* pDesc, Descr
             {
                 if (desc->mType == DESCRIPTOR_TYPE_SAMPLER)
                 {
-                    pDescriptorSet->pBindings[i] = samplerBindingIndex;
-                    samplerBindingIndex += arrayCount;
+                    // Use explicit binding from Descriptor.mOffset if mUseExplicitBindings is set
+                    if (pDesc->mUseExplicitBindings)
+                    {
+                        pDescriptorSet->pBindings[i] = desc->mOffset;
+                    }
+                    else
+                    {
+                        pDescriptorSet->pBindings[i] = samplerBindingIndex;
+                        samplerBindingIndex += arrayCount;
+                    }
                     pDescriptorSet->pResourceIndices[i] = samplerResIndex;
                     samplerResIndex += arrayCount;
                 }
                 else
                 {
-                    pDescriptorSet->pBindings[i] = textureBindingIndex;
-                    textureBindingIndex += arrayCount;
+                    // Use explicit binding from Descriptor.mOffset if mUseExplicitBindings is set
+                    if (pDesc->mUseExplicitBindings)
+                    {
+                        pDescriptorSet->pBindings[i] = desc->mOffset;
+                    }
+                    else
+                    {
+                        pDescriptorSet->pBindings[i] = textureBindingIndex;
+                        textureBindingIndex += arrayCount;
+                    }
                     pDescriptorSet->pResourceIndices[i] = textureResIndex;
                     textureResIndex += arrayCount;
                 }
@@ -823,8 +839,16 @@ void addDescriptorSet(Renderer* pRenderer, const DescriptorSetDesc* pDesc, Descr
             }
             else
             {
-                pDescriptorSet->pBindings[i] = bufferBindingIndex;
-                bufferBindingIndex += arrayCount;
+                // Use explicit binding from Descriptor.mOffset if mUseExplicitBindings is set
+                if (pDesc->mUseExplicitBindings)
+                {
+                    pDescriptorSet->pBindings[i] = desc->mOffset;
+                }
+                else
+                {
+                    pDescriptorSet->pBindings[i] = bufferBindingIndex;
+                    bufferBindingIndex += arrayCount;
+                }
                 pDescriptorSet->pResourceIndices[i] = bufferResIndex;
                 bufferResIndex += arrayCount;
             }

@@ -1981,6 +1981,7 @@ typedef struct DescriptorSetDesc
     uint32_t                  mForceArgumentBuffer;
     const MetalDescriptorSet* pSrtSets;
     uint32_t                  mSrtSetCount;
+    uint32_t                  mUseExplicitBindings;  // When set, use Descriptor.mOffset as binding index
 #endif
 #if defined(VULKAN)
     const StaticSamplerDesc* pStaticSamplers;
